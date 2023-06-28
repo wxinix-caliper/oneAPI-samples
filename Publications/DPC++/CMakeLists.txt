@@ -24,14 +24,19 @@ cmake_minimum_required(VERSION 3.4)
 
 # set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON")
 
-if(WIN32)
-  include (CMakeForceCompiler)
-  CMAKE_FORCE_CXX_COMPILER (icx-cl IntelDPCPP)
-  include (Platform/Windows-Clang)
-endif(WIN32)
-if(UNIX)
-  set(CMAKE_CXX_COMPILER icpx)
-endif(UNIX)
+if (WIN32)
+#    include(CMakeForceCompiler)
+#    CMAKE_FORCE_CXX_COMPILER(icx-cl IntelDPCPP)
+    include(Platform/Windows-Clang)
+endif (WIN32)
+
+if (UNIX)
+    set(CMAKE_CXX_COMPILER icpx)
+endif (UNIX)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /debug:all /Od")
+endif()
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_CXX_STANDARD 17)
@@ -40,7 +45,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type selected, default to Release")
     set(CMAKE_BUILD_TYPE "Release" CACHE PATH "Build Type" FORCE)
-endif()
+endif ()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -49,9 +54,9 @@ option(NODPL "Don't build samples requiring an installation of oneDPL and its de
 
 enable_testing()
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install" CACHE PATH "Install Path" FORCE)
-endif()
+endif ()
 
 
 # Define project parameters for individual sample dirs.
@@ -64,15 +69,15 @@ function(add_book_sample)
     set(one_value_args TARGET)
     set(multi_value_args SOURCES LIBS)
     cmake_parse_arguments(BOOK_SAMPLE
-        "${options}" "${one_value_args}" "${multi_value_args}"
-        ${ARGN}
-    )
+            "${options}" "${one_value_args}" "${multi_value_args}"
+            ${ARGN}
+            )
 
     add_executable(${BOOK_SAMPLE_TARGET} ${BOOK_SAMPLE_SOURCES})
 
-    if(WIN32)
+    if (WIN32)
         target_compile_options(${BOOK_SAMPLE_TARGET} PRIVATE /EHsc)
-    endif()
+    endif ()
 
     #target_compile_options(${BOOK_SAMPLE_TARGET} PRIVATE -fsycl -fsycl-unnamed-lambda -ferror-limit=1 -Wall -Wpedantic -Wno-pass-failed)
     target_compile_options(${BOOK_SAMPLE_TARGET} PRIVATE -fsycl -fsycl-unnamed-lambda -ferror-limit=1 -Wall -Wpedantic -Wno-pass-failed -Wno-unused-variable)
@@ -80,17 +85,17 @@ function(add_book_sample)
     target_link_libraries(${BOOK_SAMPLE_TARGET} PRIVATE -fsycl)
     target_link_libraries(${BOOK_SAMPLE_TARGET} PRIVATE ${BOOK_SAMPLE_LIBS})
 
-    if(CMAKE_CONFIGURATION_TYPES)
+    if (CMAKE_CONFIGURATION_TYPES)
         set(BOOK_SAMPLE_CONFIGS ${CMAKE_CONFIGURATION_TYPES})
-    else()
+    else ()
         set(BOOK_SAMPLE_CONFIGS ${CMAKE_BUILD_TYPE})
-    endif()
-    foreach(CONFIG ${BOOK_SAMPLE_CONFIGS})
+    endif ()
+    foreach (CONFIG ${BOOK_SAMPLE_CONFIGS})
         install(TARGETS ${BOOK_SAMPLE_TARGET} CONFIGURATIONS ${CONFIG} DESTINATION ${CONFIG})
-    endforeach()
-    if(BOOK_SAMPLE_TEST)
+    endforeach ()
+    if (BOOK_SAMPLE_TEST)
         add_test(NAME ${BOOK_SAMPLE_TARGET} COMMAND ${BOOK_SAMPLE_TARGET})
-    endif()
+    endif ()
 endfunction()
 
 
@@ -98,14 +103,14 @@ endfunction()
 # Add all that are found to the CMake add_subdirectory() list.
 
 function(find_sample_dirs)
-  foreach(dir ${ARGN})
-    if(IS_DIRECTORY ${dir})
-      if(EXISTS "${dir}/CMakeLists.txt")
-        message(STATUS "-- adding project dir: " ${dir})
-        add_subdirectory(${dir})
-      endif()
-    endif()
-  endforeach()
+    foreach (dir ${ARGN})
+        if (IS_DIRECTORY ${dir})
+            if (EXISTS "${dir}/CMakeLists.txt")
+                message(STATUS "-- adding project dir: " ${dir})
+                add_subdirectory(${dir})
+            endif ()
+        endif ()
+    endforeach ()
 endfunction(find_sample_dirs)
 
 # Make a list of all folders that contain samples and add them to
